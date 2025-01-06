@@ -19,45 +19,55 @@ cd shlhttp
 
 ## Usage
 ### Basic Example
-To start a basic HTTP server, include `shttp.hpp` in your C++ source file and use the following example code:
+To start a basic HTTP server, include `shttp.hpp`. You can start with the following example:
 
 ```cpp
 #include "shttp.hpp"
+#include <iostream>
+
+const std::string GET_RESPONSE_TEXT = R"(<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<title>SHTTP</title>
+</head>
+<body>
+<h2>Hello shttp</h2>
+ <FORM action="/"
+       enctype="multipart/form-data"
+       method="post">
+   <P>
+   What is your name? <INPUT type="text" name="submit-name"><BR>
+   What files are you sending? <INPUT type="file" name="files"><BR>
+   <INPUT type="submit" value="Send"> <INPUT type="reset">
+ </FORM>
+</body>
+</html>
+)";
 
 int main() {
-    shttp::server server;
-    
-    server.get("/", [](const shttp::request& req, shttp::response& res) {
-        res.set_content("Hello, World!", "text/plain");
-    });
-
-    server.listen("0.0.0.0", 8080);
-    return 0;
+  using namespace shttp;
+  int lsocket = listen_socket();
+  do {
+    auto [acc_socket, client_host, client_port] = accept_on_socket(lsocket);
+    std::cout << acc_socket << " " << client_host << " " << client_port
+              << std::endl;
+    auto request = receive_request(acc_socket);
+    std::cout << request << std::endl;
+    response_t response = response_of(200,"ok",GET_RESPONSE_TEXT);
+    send_response(acc_socket, response);
+    close(acc_socket);
+  } while (true);
+  close(lsocket);
+  return 0;
 }
 ```
 
 Compile and run your program. The server will be accessible at `http://localhost:8080`.
 
 ## API Reference
-### shttp::server
-- **Methods:**
-  - `void listen(const std::string& host, int port);`
-  - `void get(const std::string& path, const request_handler& handler);`
-  - `void post(const std::string& path, const request_handler& handler);`
-  - `void set_content(const std::string& content, const std::string& content_type);`
 
-### shttp::request
-- Represents an HTTP request.
-- **Properties:**
-  - `std::string method;`
-  - `std::string path;`
-  - `std::unordered_map<std::string, std::string> headers;`
-  - `std::string body;`
-
-### shttp::response
-- Represents an HTTP response.
-- **Methods:**
-  - `void set_content(const std::string& content, const std::string& content_type);`
+TODO
 
 ## Contributing
 ### Guidelines
